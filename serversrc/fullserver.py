@@ -1,15 +1,29 @@
 
 
-import socket, string, select
+import socket, string, select, sys
 HOST, PORT = '', 5007
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
 s.bind((HOST, PORT))
 s.listen(1)
-
+try:
+    f = open('log.txt', 'a')
+    print 'logfile detected'
+    f.close()
+except:
+    print "Will not use logfile"
 socknames = {}
-
+def write(message):
+    
+    global f
+    try:
+        f = open('log.txt', 'a')
+        f.write(message)
+        f.close()
+    except: pass
 def broadcast(message, sender):
+    write(message)
     for sock in socknames.keys():
         if sock is not sender:
             sock.send(message)
@@ -45,5 +59,7 @@ while 1:
                 broadcast("%s has arrived.\n" % name, sock)
 
             else:
-                broadcast("%s: %s\n" % (name, text), sock)
+                if text == '/killserver':
+                    sys.exit(0)
+                broadcast("%s> %s\n" % (name, text), sock)
 
